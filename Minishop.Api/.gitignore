@@ -1,0 +1,16 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+
+# Local development configuration
+appsettings.Development.json
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
