@@ -80,7 +80,9 @@ namespace Minishop.Api
                 });
 
             builder.Services.AddAuthorization();
+
             builder.Services.AddScoped<PasswordService>();
+            builder.Services.AddScoped<ProductService>();
 
             var app = builder.Build();
 

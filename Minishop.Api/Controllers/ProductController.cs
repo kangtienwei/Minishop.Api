@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Minishop.Api.Data;
 using Minishop.Api.DTOs;
 using Minishop.Api.Models;
-using Microsoft.AspNetCore.Authorization;
+using Minishop.Api.Services;
 
 namespace Minishop.Api.Controllers
 {
@@ -12,29 +13,18 @@ namespace Minishop.Api.Controllers
     public class ProductsController : ControllerBase
     {
 
-        private readonly ApplicationDbContext _context;
+        private readonly ProductService _productService;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
+
         // GET: api/products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
         {
-            var products = await _context.Products
-                .Where(p => p.IsActive)
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    IsActive = p.IsActive
-                })
-                .ToListAsync();
-
+            var products = await _productService.GetProductsAsync();
             return Ok(products);
         }
 
@@ -42,18 +32,7 @@ namespace Minishop.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
-            var product = await _context.Products
-                .Where(p => p.Id == id)
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    IsActive = p.IsActive
-                })
-                .FirstOrDefaultAsync();
+            var product = await _productService.GetProductAsync(id);
 
             if (product == null)
             {
@@ -66,36 +45,14 @@ namespace Minishop.Api.Controllers
         // POST: api/products
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ActionResult<ProductDto>> CreateProduct(
-            CreateProductDto dto)
+        public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto dto)
         {
-            var product = new Product
-            {
-                Name = dto.Name,
-                Description = dto.Description,
-                Price = dto.Price,
-                Stock = dto.Stock,
-                IsActive = true
-            };
-
-            _context.Products.Add(product);
-
-            await _context.SaveChangesAsync();
-
-            var result = new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock,
-                IsActive = product.IsActive
-            };
+            var product = await _productService.CreateProductAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetProduct),
                 new { id = product.Id },
-                result);
+                product);
         }
 
         // PUT: api/products/1
@@ -103,20 +60,12 @@ namespace Minishop.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, UpdateProductDto dto)
         {
-            var product = await _context.Products.FindAsync(id);
+            var updated = await _productService.UpdateProductAsync(id, dto);
 
-            if (product == null)
+            if (!updated)
             {
                 return NotFound();
             }
-
-            product.Name = dto.Name;
-            product.Description = dto.Description;
-            product.Price = dto.Price;
-            product.Stock = dto.Stock;
-            product.IsActive = dto.IsActive;
-
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -126,16 +75,12 @@ namespace Minishop.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var deleted = await _productService.DeleteProductAsync(id);
 
-            if (product == null)
+            if (!deleted)
             {
                 return NotFound();
             }
-
-            _context.Products.Remove(product);
-
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
