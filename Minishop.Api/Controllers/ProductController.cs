@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Minishop.Api.Data;
 using Minishop.Api.DTOs;
 using Minishop.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Minishop.Api.Controllers
 {
@@ -63,6 +64,7 @@ namespace Minishop.Api.Controllers
         }
 
         // POST: api/products
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<ProductDto>> CreateProduct(
             CreateProductDto dto)
@@ -97,13 +99,11 @@ namespace Minishop.Api.Controllers
         }
 
         // PUT: api/products/1
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(
-            int id,
-            UpdateProductDto dto)
+        public async Task<IActionResult> UpdateProduct(int id, UpdateProductDto dto)
         {
-            var product = await _context.Products
-                .FindAsync(id);
+            var product = await _context.Products.FindAsync(id);
 
             if (product == null)
             {
@@ -122,11 +122,11 @@ namespace Minishop.Api.Controllers
         }
 
         // DELETE: api/products/1
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products
-                .FindAsync(id);
+            var product = await _context.Products.FindAsync(id);
 
             if (product == null)
             {
